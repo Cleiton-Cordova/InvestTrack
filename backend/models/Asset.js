@@ -12,11 +12,11 @@ const Asset = sequelize.define('Asset', {
     allowNull: false,
   },
   quantity: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.DECIMAL(10, 2), // ✅ allows fractional shares like 0.25
     allowNull: false,
   },
   price: {
-    type: DataTypes.FLOAT,
+    type: DataTypes.DECIMAL(10, 2), // ✅ accurate for financial values
     allowNull: false,
   },
   currency: {

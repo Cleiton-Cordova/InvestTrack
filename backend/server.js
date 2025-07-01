@@ -1,23 +1,12 @@
 // server.js
 require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const app = express();
-
+const app = require('./app'); // ✅ importa app já configurado
 const sequelize = require('./config/database');
 require('./models/Asset');
-require('./models/User'); // ✅ important: load User model
+require('./models/User');
 
-const routes = require('./routes'); // ✅ loads both assets + auth routes
-
-app.use(cors());
-app.use(express.json());
-
-// Mount all routes under /api (e.g. /api/register, /api/assets)
-app.use('/api', routes);
-
-// Start the server
 const PORT = process.env.PORT || 5000;
+
 sequelize.sync().then(() => {
   app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);

@@ -1,10 +1,16 @@
+// app.js
 const express = require('express');
 const cors = require('cors');
-const routes = require('./routes');
-
 const app = express();
-app.use(cors()); // This line enables cross-origin requests
+
+// Enable CORS for all origins
+app.use(cors());
+
+// Parse incoming JSON requests
 app.use(express.json());
+
+// Mount all grouped routes under /api
+const routes = require('./routes');
 app.use('/api', routes);
 
 module.exports = app;
