@@ -1,38 +1,34 @@
+// routes/variation.js
 const express = require('express');
 const router = express.Router();
 const { getBrapiData } = require('../api/brapi');
 const { getTwelveData } = require('../api/twelvedata');
 
-// GET /api/variation/:ticker
-// Query param: ?currency=BRL|USD|EUR
 router.get('/:ticker', async (req, res) => {
   const { ticker } = req.params;
   const { currency } = req.query;
 
-  try {
-    if (!currency) {
-      return res.status(400).json({ error: 'Currency is required' });
-    }
+  if (!ticker || !currency) {
+    return res.status(400).json({ error: 'Missing ticker or currency' });
+  }
 
+  try {
     let data;
 
     if (currency === 'BRL') {
-      const formattedTicker = ticker.toUpperCase().endsWith('.SA')
-        ? ticker.toUpperCase()
-        : `${ticker.toUpperCase()}.SA`;
-      data = await getBrapiData(formattedTicker);
+      data = await getBrapiData(ticker); // PETR4.SA etc.
     } else {
-      data = await getTwelveData(ticker.toUpperCase());
+      data = await getTwelveData(ticker); // TSLA, ADS, etc.
     }
 
-    if (!data || typeof data.lastPrice !== 'number') {
-      return res.status(400).json({ error: 'No variation data found' });
+    if (!data || !data.lastPrice) {
+      return res.status(404).json({ error: 'Price data not found' });
     }
 
-    res.json(data);
+    res.json(data); // { lastPrice, resolvedTicker }
   } catch (err) {
-    console.error('Error fetching variation:', err.message);
-    res.status(500).json({ error: 'Failed to fetch variation data' });
+    console.error('Variation fetch error:', err.message);
+    res.status(500).json({ error: 'Failed to fetch variation' });
   }
 });
 

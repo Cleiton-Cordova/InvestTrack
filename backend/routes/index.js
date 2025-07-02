@@ -1,12 +1,13 @@
+// routes/index.js
 const express = require('express');
 const router = express.Router();
 
 const assetRoutes = require('./assets');
-const userRoutes = require('./user');
-const searchTickerRoutes = require('./searchTicker'); // search ticker routes
+const authRoutes = require('./auth');
+const variationRoutes = require('./variation'); 
 
 router.use('/assets', assetRoutes);
-router.use('/user', userRoutes);
-router.use('/search-ticker', searchTickerRoutes); // search ticker routes
+router.use('/auth', authRoutes);
+router.use('/variation', variationRoutes); 
 
 module.exports = router;

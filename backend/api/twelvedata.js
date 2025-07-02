@@ -1,34 +1,38 @@
+// api/twelvedata.js
 const fetch = require('node-fetch');
 
-/**
- * Fetches the latest quote data for a given symbol from the Twelve Data API.
- * @param {string} symbol - The stock symbol (e.g., TSLA, AAPL).
- * @returns {Object|null} - An object containing the last price and percent change, or null if failed.
- */
-const getTwelveData = async (symbol) => {
-  const apiKey = process.env.TWELVE_API_KEY;
-  const url = `https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${apiKey}`;
+const API_KEY = process.env.TWELVE_DATA_API_KEY;
 
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
+const knownExchanges = [
+  '',         // TSLA
+  '.XETRA',   // ADS.XETRA
+  '.DE',      // ADS.DE
+  '.NYSE',    // NYSE stocks
+  '.NASDAQ'   // NASDAQ stocks
+];
 
-    console.log('[TwelveData]', data);
+async function getTwelveData(baseTicker) {
+  for (const suffix of knownExchanges) {
+    const formattedTicker = `${baseTicker}${suffix}`;
+    const url = `https://api.twelvedata.com/price?symbol=${formattedTicker}&apikey=${API_KEY}`;
 
-    if (data.code || !data.close) {
-      throw new Error('No valid data returned from Twelve Data');
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (response.ok && data && data.price) {
+        console.log(`✅ Found price for: ${formattedTicker}`);
+        return { lastPrice: parseFloat(data.price), resolvedTicker: formattedTicker };
+      } else {
+        console.warn(`❌ No data for ${formattedTicker}:`, data?.message || 'unknown error');
+      }
+    } catch (err) {
+      console.error(`❌ Error fetching Twelve Data for ${formattedTicker}:`, err.message);
     }
-
-    return {
-      lastPrice: parseFloat(data.close),
-      changePercent: parseFloat(data.percent_change), // opcional
-    };
-  } catch (error) {
-    console.error('Error fetching data from Twelve Data:', error.message);
-    return null; // ✅ Retorno padrão em caso de falha
   }
-};
 
-module.exports = {
-  getTwelveData,
-};
+  console.warn(`⚠️ No working ticker found for: ${baseTicker}`);
+  return null;
+}
+
+module.exports = { getTwelveData };
