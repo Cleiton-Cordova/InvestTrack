@@ -60,3 +60,6 @@ InvestTrack/
 │
 ├── README.md
 └── ...
+
+👤 Author
+Made with ❤️ by Cleiton Cordova
