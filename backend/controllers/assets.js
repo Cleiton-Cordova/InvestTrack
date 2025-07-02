@@ -39,6 +39,7 @@ exports.createOrUpdateAsset = async (req, res) => {
     quantity = parseFloat(quantity);
     price = parseFloat(price);
     ticker = ticker.toUpperCase();
+    currency = currency.toUpperCase();
 
     // ✅ Validate input
     if (
@@ -55,25 +56,33 @@ exports.createOrUpdateAsset = async (req, res) => {
       ticker = `${ticker}.SA`;
     }
 
+    // ✅ Ticker validation (verifica se é um ticker válido na API)
     const assetInfo = await verifyTickerExists(ticker, currency);
-    console.log('[DEBUG] Ticker:', ticker, '| Currency:', currency, '| Valid:', !!assetInfo);
-
     if (!assetInfo) {
       return res.status(400).json({ error: 'Invalid or unknown ticker' });
     }
 
+    // ✅ Usa nome do ativo retornado pela API se o nome estiver vazio
     if (!name || name.trim() === '') {
-      name = assetInfo.name;
+      name = assetInfo.name || ticker;
     }
 
+    // ✅ Verifica se o ativo já existe para o mesmo usuário, ticker e moeda
     const existing = await Asset.findOne({ where: { ticker, currency, userId } });
 
     if (existing) {
+      // ✅ Atualiza quantidade e calcula novo preço médio
       const totalValue = existing.quantity * existing.price + quantity * price;
       const totalQuantity = existing.quantity + quantity;
+
       existing.quantity = totalQuantity;
       existing.price = parseFloat((totalValue / totalQuantity).toFixed(2));
-      existing.name = name;
+
+      // Atualiza o nome apenas se for vazio
+      if (!existing.name || existing.name.trim() === '') {
+        existing.name = name;
+      }
+
       await existing.save();
       return res.status(200).json(existing);
     } else {

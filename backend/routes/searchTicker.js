@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
 
   try {
     if (currency === 'BRL') {
-      // 🔹 Fonte: Brapi (ativos brasileiros)
+      // 🔹 Brapi (ativos brasileiros)
       const response = await fetch(`https://brapi.dev/api/quote/list?search=${name}`);
       const data = await response.json();
 
@@ -27,14 +27,13 @@ router.get('/', async (req, res) => {
 
       return res.json(suggestions);
     } else {
-      // 🔹 Fonte: Twelve Data (ativos internacionais)
-      const apiKey = process.env.TWELVE_API_KEY;
+      // 🔹 Twelve Data (ativos internacionais)
+      const apiKey = process.env.TWELVE_DATA_API_KEY;
       const response = await fetch(`https://api.twelvedata.com/symbol_search?symbol=${name}&apikey=${apiKey}`);
       const data = await response.json();
 
       if (!data?.data?.length) return res.json([]);
 
-      // Filtra pela moeda desejada (USD, EUR etc.)
       const filtered = data.data.filter(stock => stock.currency === currency);
 
       const suggestions = filtered.slice(0, 8).map(stock => ({
