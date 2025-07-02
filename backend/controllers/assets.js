@@ -6,7 +6,7 @@ const { getTwelveData } = require('../api/twelvedata');
 const verifyTickerExists = async (ticker, currency) => {
   try {
     if (currency === 'BRL') {
-      return await getBrapiData(ticker); // { lastPrice, name, currency }
+      return await getBrapiData(ticker);
     } else {
       return await getTwelveData(ticker);
     }
@@ -36,14 +36,21 @@ exports.createOrUpdateAsset = async (req, res) => {
     let { name, ticker, quantity, price, currency } = req.body;
     const { userId } = req.user;
 
-    if (!ticker || !quantity || !price || !currency) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
     quantity = parseFloat(quantity);
     price = parseFloat(price);
     ticker = ticker.toUpperCase();
 
+    // ✅ Validate input
+    if (
+      !ticker || typeof ticker !== 'string' ||
+      !currency || typeof currency !== 'string' ||
+      typeof quantity !== 'number' || quantity <= 0 ||
+      typeof price !== 'number' || price <= 0
+    ) {
+      return res.status(400).json({ error: 'Missing or invalid required fields' });
+    }
+
+    // ✅ Normalize ticker if BRL
     if (currency === 'BRL' && !ticker.endsWith('.SA')) {
       ticker = `${ticker}.SA`;
     }
@@ -55,7 +62,6 @@ exports.createOrUpdateAsset = async (req, res) => {
       return res.status(400).json({ error: 'Invalid or unknown ticker' });
     }
 
-    // Use API name if not provided
     if (!name || name.trim() === '') {
       name = assetInfo.name;
     }
@@ -67,6 +73,7 @@ exports.createOrUpdateAsset = async (req, res) => {
       const totalQuantity = existing.quantity + quantity;
       existing.quantity = totalQuantity;
       existing.price = parseFloat((totalValue / totalQuantity).toFixed(2));
+      existing.name = name;
       await existing.save();
       return res.status(200).json(existing);
     } else {
@@ -74,7 +81,7 @@ exports.createOrUpdateAsset = async (req, res) => {
       return res.status(201).json(newAsset);
     }
   } catch (err) {
-    console.error('Error saving asset:', err);
+    console.error('❌ Error saving asset:', err);
     res.status(500).json({ error: 'Error saving asset' });
   }
 };
